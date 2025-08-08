@@ -50,9 +50,17 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
             </div>
             <div className="space-y-2">
               {dayRosters.map((r) => (
-                <button key={r.id} className="w-full text-left text-xs rounded-md px-2 py-1 bg-card shadow hover:shadow-md transition-shadow">
-                  <div className="font-medium truncate">{r.title}</div>
-                  <div className="text-muted-foreground truncate">{r.area} • {r.section}</div>
+                <button
+                  key={r.id}
+                  className="relative w-full text-left text-xs rounded-md px-2 py-2 bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors shadow-sm hover:shadow-md"
+                >
+                  <div className="flex items-start gap-2">
+                    <span aria-hidden className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary/70 ring-2 ring-primary/20" />
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{r.title}</div>
+                      <div className="text-muted-foreground truncate">{r.area} • {r.section}</div>
+                    </div>
+                  </div>
                 </button>
               ))}
               {dayRosters.length === 0 && (
