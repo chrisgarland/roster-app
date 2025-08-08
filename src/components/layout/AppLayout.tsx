@@ -10,7 +10,7 @@ export default function AppLayout() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset>
-<header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3">
+<header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 shadow-sm">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="ml-1" />
             </div>
@@ -35,7 +35,7 @@ export default function AppLayout() {
               </DropdownMenu>
             </nav>
           </header>
-          <div className="p-4">
+          <div className="p-4 animate-fade-in">
             <Outlet />
           </div>
         </SidebarInset>
