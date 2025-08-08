@@ -38,7 +38,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
               </button>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">Add</Button>
+                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">Add</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
@@ -56,7 +56,19 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                 </button>
               ))}
               {dayRosters.length === 0 && (
-                <div className="text-xs text-muted-foreground">No roster</div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="text-xs text-muted-foreground hover:text-foreground story-link">
+                      + Add daily roster
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add Daily Roster</DialogTitle>
+                    </DialogHeader>
+                    <RosterForm defaultDate={d} onSubmit={(r) => addRoster(key, r)} />
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
             {!isSameMonth(d, date) && <div className="absolute inset-0 bg-background/60 pointer-events-none" />}
