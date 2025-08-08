@@ -1,5 +1,5 @@
 import { eachHourOfInterval, format, parseISO } from "date-fns";
-import { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 type Shift = {
@@ -78,7 +78,7 @@ export default function DayTimeline() {
     <section className="animate-enter">
       <header className="mb-4">
         <h1 className="text-xl font-semibold">Day timeline</h1>
-        <p className="text-sm text-muted-foreground">Each shift is tied to a specific Section. Rows are per Section.</p>
+        <p className="text-sm text-muted-foreground">Areas are headers; each Section is a horizontal timeline row.</p>
       </header>
 
       {/* Two-column grid: left labels, right timeline */}
@@ -94,50 +94,57 @@ export default function DayTimeline() {
           ))}
         </div>
 
-        {/* Rows */}
-        {sectionRows.map(({ area, section }) => (
-          <>
-            {/* Left label for the row: Area — Section */}
-            <div key={`${area}-${section}-label`} className="py-3 pr-2 border-r">
-              <div className="text-xs text-muted-foreground">{area}</div>
-              <div className="text-sm font-medium">{section}</div>
+        {/* Area groups */}
+        {areas.map((group) => (
+          <React.Fragment key={group.area}>
+            {/* Area header row */}
+            <div className="py-2 pr-2 border-r">
+              <div className="text-sm font-semibold">{group.area}</div>
             </div>
+            <div className="h-8 border-b bg-muted/30 rounded-sm" />
 
-            {/* Right track for the row */}
-            <div key={`${area}-${section}-track`} className="relative h-16 rounded-md bg-muted/40">
-              {/* Hour grid lines */}
-              <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(64px, 1fr))` }}>
-                {hours.map((h) => (
-                  <div key={`${area}-${section}-${h.toISOString()}`} className="border-l/50 border-l first:border-l-0" />
-                ))}
-              </div>
+            {/* Section rows */}
+            {group.sections.map((section) => (
+              <React.Fragment key={`${group.area}-${section}`}>
+                <div className="py-3 pr-2 border-r">
+                  <div className="text-sm font-medium">{section}</div>
+                </div>
+                <div className="relative h-16 rounded-md bg-muted/40">
+                  {/* Hour grid lines */}
+                  <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(64px, 1fr))` }}>
+                    {hours.map((h) => (
+                      <div key={`${group.area}-${section}-${h.toISOString()}`} className="border-l/50 border-l first:border-l-0" />
+                    ))}
+                  </div>
 
-              {/* Shifts for this exact Section */}
-              {mockShifts
-                .filter((sh) => sh.area === area && sh.section === section)
-                .map((sh) => {
-                  const s = parseISO(sh.start);
-                  const e = parseISO(sh.end);
-                  const left = getLeftPercent(s);
-                  const width = getWidthPercent(s, e);
+                  {/* Shifts for this exact Section */}
+                  {mockShifts
+                    .filter((sh) => sh.area === group.area && sh.section === section)
+                    .map((sh) => {
+                      const s = parseISO(sh.start);
+                      const e = parseISO(sh.end);
+                      const left = getLeftPercent(s);
+                      const width = getWidthPercent(s, e);
 
-                  return (
-                    <div
-                      key={sh.id}
-                      className="absolute top-1 h-14 rounded-md text-xs font-medium px-2 py-1 shadow"
-                      style={{ left: `${left}%`, width: `${width}%`, background: sh.color, color: 'hsl(var(--primary-foreground))' }}
-                      aria-label={`${sh.staff} • ${section} • ${format(s, 'p')}–${format(e, 'p')}`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="inline-flex items-center rounded-sm bg-background/20 px-1.5 py-0.5 text-[10px]">{section}</span>
-                        <span className="truncate">{sh.staff}</span>
-                      </div>
-                      <div className="opacity-85 text-[11px]">{format(s, 'p')} – {format(e, 'p')}</div>
-                    </div>
-                  );
-                })}
-            </div>
-          </>
+                      return (
+                        <div
+                          key={sh.id}
+                          className="absolute top-1 h-14 rounded-md text-xs font-medium px-2 py-1 shadow"
+                          style={{ left: `${left}%`, width: `${width}%`, background: sh.color, color: 'hsl(var(--primary-foreground))' }}
+                          aria-label={`${sh.staff} • ${section} • ${format(s, 'p')}–${format(e, 'p')}`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="inline-flex items-center rounded-sm bg-background/20 px-1.5 py-0.5 text-[10px]">{section}</span>
+                            <span className="truncate">{sh.staff}</span>
+                          </div>
+                          <div className="opacity-85 text-[11px]">{format(s, 'p')} – {format(e, 'p')}</div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </React.Fragment>
+            ))}
+          </React.Fragment>
         ))}
       </div>
     </section>
