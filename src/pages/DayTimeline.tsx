@@ -69,6 +69,7 @@ export default function DayTimeline() {
   const endRef = parseISO("2020-01-01T23:00:00");
   const hours = eachHourOfInterval({ start: startRef, end: endRef });
   const totalHours = endRef.getHours() - startRef.getHours(); // 15
+  const ticks = hours.slice(0, -1); // 15 intervals between 8:00 and 23:00
 
   // Helpers to position shifts within a row based on time
   const getLeftPercent = (d: Date) => ((d.getHours() + d.getMinutes() / 60 - 8) / totalHours) * 100;
@@ -86,8 +87,8 @@ export default function DayTimeline() {
         {/* Top-left blank cell to align with hour ruler */}
         <div />
         {/* Hour ruler */}
-        <div className="sticky top-0 z-10 grid border-b bg-background/80 backdrop-blur" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(64px, 1fr))` }}>
-          {hours.map((h) => (
+        <div className="sticky top-0 z-10 grid border-b bg-background/80 backdrop-blur" style={{ gridTemplateColumns: `repeat(${ticks.length}, minmax(64px, 1fr))` }}>
+          {ticks.map((h) => (
             <div key={h.toISOString()} className="text-xs text-muted-foreground py-1 px-1">
               {format(h, "ha")}
             </div>
@@ -98,7 +99,7 @@ export default function DayTimeline() {
         {areas.map((group) => (
           <React.Fragment key={group.area}>
             {/* Area header row */}
-            <div className="py-2 pr-2 border-r">
+            <div className="h-8 pr-2 border-r flex items-center">
               <div className="text-sm font-semibold">{group.area}</div>
             </div>
             <div className="h-8 border-b bg-muted/30 rounded-sm" />
@@ -106,13 +107,13 @@ export default function DayTimeline() {
             {/* Section rows */}
             {group.sections.map((section) => (
               <React.Fragment key={`${group.area}-${section}`}>
-                <div className="py-3 pr-2 border-r">
+                <div className="h-16 pr-2 border-r flex items-center">
                   <div className="text-sm font-medium">{section}</div>
                 </div>
                 <div className="relative h-16 rounded-md bg-muted/40">
                   {/* Hour grid lines */}
-                  <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(64px, 1fr))` }}>
-                    {hours.map((h) => (
+                  <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${ticks.length}, minmax(64px, 1fr))` }}>
+                    {ticks.map((h) => (
                       <div key={`${group.area}-${section}-${h.toISOString()}`} className="border-l/50 border-l first:border-l-0" />
                     ))}
                   </div>
