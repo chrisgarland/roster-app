@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useEffect, useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
 import { useActiveLocation, useStaff } from "@/data/hooks";
-import type { Roster as StoreRoster, Shift as StoreShift, StaffRecord } from "@/data/types";
+import type { Roster as StoreRoster, StaffRecord, Area } from "@/data/types";
 
 // Areas and sections are derived from the active location
 
@@ -202,6 +202,7 @@ export default function RosterForm({
                 roles={roles}
                 staff={staff}
                 getSections={getSections}
+                areas={areas}
               />
             </DialogContent>
           </Dialog>
@@ -209,38 +210,41 @@ export default function RosterForm({
 
         {/* Areas */}
         <div className="space-y-3">
-          {AREA_SECTIONS.map(({ area }) => {
-            const list = (shifts || []).filter((s) => s.area === area);
+          {areas.map((a) => {
+            const list = (shifts || []).filter((s) => s.areaId === a.id);
             return (
-              <Card key={area}>
+              <Card key={a.id}>
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="font-medium">{area}</div>
+                    <div className="font-medium">{a.name}</div>
                     <div className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? "shift" : "shifts"}</div>
                   </div>
                   {list.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No shifts assigned to this area</p>
                   ) : (
                     <ul className="space-y-2">
-                      {list.map((s, idx) => (
-                        <li key={`${area}-${idx}`} className="text-sm flex items-center justify-between gap-2">
-                          <div className="truncate">
-                            <span className="font-medium">{s.staff}</span>
-                            <span className="mx-2 text-muted-foreground">•</span>
-                            <span>{s.role}</span>
-                            <span className="mx-2 text-muted-foreground">•</span>
-                            <span>
-                              {s.start} - {s.end}
-                            </span>
-                            {s.section ? (
-                              <>
-                                <span className="mx-2 text-muted-foreground">•</span>
-                                <span>{s.section}</span>
-                              </>
-                            ) : null}
-                          </div>
-                        </li>
-                      ))}
+                      {list.map((s, idx) => {
+                        const staffRec = staffMap.get(s.staffId);
+                        return (
+                          <li key={`${a.id}-${idx}`} className="text-sm flex items-center justify-between gap-2">
+                            <div className="truncate">
+                              <span className="font-medium">{staffRec?.name || "Unassigned"}</span>
+                              <span className="mx-2 text-muted-foreground">•</span>
+                              <span>{s.role}</span>
+                              <span className="mx-2 text-muted-foreground">•</span>
+                              <span>
+                                {s.start} - {s.end}
+                              </span>
+                              {s.section ? (
+                                <>
+                                  <span className="mx-2 text-muted-foreground">•</span>
+                                  <span>{s.section}</span>
+                                </>
+                              ) : null}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </CardContent>
@@ -263,30 +267,31 @@ function AddShiftForm({
   roles,
   staff,
   getSections,
+  areas,
 }: {
   onAdd: (s: Shift) => void;
   onCancel: () => void;
   roles: string[];
   staff: StaffRecord[];
-  getSections: (area?: string) => string[];
+  getSections: (areaId?: string) => string[];
+  areas: Area[];
 }) {
   const schema = ShiftSchema;
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      staff: "",
       staffId: "",
       role: roles[0] || "",
-      area: AREA_SECTIONS[0].area,
-      section: AREA_SECTIONS[0].sections[0] || "",
+      areaId: areas[0]?.id || "",
+      section: getSections(areas[0]?.id)[0] || "",
       start: "10:00",
       end: "16:00",
       notes: "",
     },
   });
 
-  const area = form.watch("area");
-  const sections = getSections(area);
+  const areaId = form.watch("areaId");
+  const sections = getSections(areaId);
 
   useEffect(() => {
     // Ensure section is always valid for the selected area
@@ -322,7 +327,7 @@ function AddShiftForm({
           )} />
 
           {/* Area */}
-          <FormField name="area" control={form.control} render={({ field }) => (
+          <FormField name="areaId" control={form.control} render={({ field }) => (
             <FormItem>
               <FormLabel>Area</FormLabel>
               <Select value={field.value} onValueChange={(val) => {
@@ -336,8 +341,8 @@ function AddShiftForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {AREA_SECTIONS.map((a) => (
-                    <SelectItem key={a.area} value={a.area}>{a.area}</SelectItem>
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -396,7 +401,6 @@ function AddShiftForm({
                 onValueChange={(val) => {
                   field.onChange(val);
                   const selected = staff.find((s) => s.id === val);
-                  form.setValue("staff", selected?.name || "");
                   if (selected?.role) form.setValue("role", selected.role);
                 }}
               >

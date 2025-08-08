@@ -1,5 +1,5 @@
-import { addDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
-import { useMemo, useState } from "react";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { useMemo } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import RosterForm from "./RosterForm";
@@ -12,15 +12,18 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
   const end = endOfWeek(endOfMonth(date), { weekStartsOn: 1 });
   const days = useMemo(() => eachDayOfInterval({ start, end }), [start, end]);
 
-  const [rosters, setRosters] = useState<Record<string, Roster[]>>({
-    [format(new Date(), 'yyyy-MM-dd')]: [
-      { id: '1', title: 'Lunch Service', description: '', shifts: [{ staff: 'Alex', staffId: 'seed', role: 'Bartender', area: 'Bar', section: 'Front Bar', start: '10:00', end: '14:00', notes: '' }] }
-    ]
-  });
+  const { state } = useStoreInternal();
+  const active = useActiveLocation();
+  const addRoster = useAddRoster();
 
-  const addRoster = (dayKey: string, roster: Roster) => {
-    setRosters((prev) => ({ ...prev, [dayKey]: [...(prev[dayKey] || []), roster] }));
-  };
+  const rosterByDay = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    state.rosters.forEach((r) => {
+      if (active?.id && r.locationId !== active.id) return;
+      (map[r.dateISO] ||= []).push(r);
+    });
+    return map;
+  }, [state.rosters, active?.id]);
 
   return (
     <div className="grid grid-cols-7 border rounded-md overflow-hidden">
@@ -31,7 +34,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
 
       {days.map((d) => {
         const key = format(d, 'yyyy-MM-dd');
-        const dayRosters = rosters[key] || [];
+        const dayRosters = rosterByDay[key] || [];
         return (
           <div key={key} className="relative min-h-28 border p-2 hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => onSelectDay(d)}>
 
@@ -71,7 +74,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                       <DialogTitle>Add Daily Roster</DialogTitle>
                       <DialogDescription>Plan and assign shifts for this day.</DialogDescription>
                     </DialogHeader>
-                    <RosterForm defaultDate={d} onSubmit={(r) => addRoster(key, r)} />
+                    <RosterForm defaultDate={d} onSubmit={(r) => addRoster(r)} />
                   </DialogContent>
                 </Dialog>
               )}
