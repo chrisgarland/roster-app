@@ -1,8 +1,10 @@
 import { eachHourOfInterval, format, parseISO } from "date-fns";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useActiveLocation, useRostersByDate, useStaff } from "@/data/hooks";
-
+import { useActiveLocation, useRostersByDate, useStaff, useUpdateRoster } from "@/data/hooks";
+import { toast } from "@/components/ui/use-toast";
+import ShiftEditorDialog from "@/components/timeline/ShiftEditorDialog";
+import type { Shift } from "@/data/types";
 // Data is sourced from the central store via hooks.
 
 export default function DayTimeline() {
@@ -22,8 +24,14 @@ export default function DayTimeline() {
   const allShifts = useMemo(() => rosters.flatMap((r) => r.shifts), [rosters]);
   const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
 
-  const parseTime = (hm: string) => parseISO(`${day}T${hm}:00`);
+  const [editor, setEditor] = useState<{ rosterId: string; shiftId: string } | null>(null);
+  const updateRoster = useUpdateRoster();
+  
 
+  const activeRoster = useMemo(() => rosters.find((r) => r.id === editor?.rosterId), [rosters, editor]);
+  const selectedShift = useMemo(() => activeRoster?.shifts.find((s) => s.id === editor?.shiftId), [activeRoster, editor]);
+
+  const parseTime = (hm: string) => parseISO(`${day}T${hm}:00`);
 
   // Timeline bounds 8:00 -> 23:00
   const startRef = parseISO("2020-01-01T08:00:00");
@@ -92,9 +100,14 @@ export default function DayTimeline() {
                       return (
                         <div
                           key={sh.id}
-                          className="absolute top-1 h-14 rounded-md text-xs font-medium px-2 py-1 shadow"
+                          className="absolute top-1 h-14 rounded-md text-xs font-medium px-2 py-1 shadow cursor-pointer hover:opacity-95"
                           style={{ left: `${left}%`, width: `${width}%`, background: "hsl(var(--primary))", color: 'hsl(var(--primary-foreground))' }}
                           aria-label={`${staffLabel} • ${section} • ${format(s, 'p')}–${format(e, 'p')}`}
+                          title="Click to edit shift"
+                          onClick={() => {
+                            const r = rosters.find((r) => r.shifts.some((x) => x.id === sh.id));
+                            if (r) setEditor({ rosterId: r.id, shiftId: sh.id });
+                          }}
                         >
                           <div className="flex items-center gap-2 truncate">
                             <span className="inline-flex items-center rounded-sm bg-background/20 px-1.5 py-0.5 text-[10px]">{section}</span>
@@ -107,9 +120,31 @@ export default function DayTimeline() {
                 </div>
               </React.Fragment>
             ))}
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))}
       </div>
+
+      {editor && activeRoster && selectedShift ? (
+        <ShiftEditorDialog
+          open={!!editor}
+          onOpenChange={(open) => setEditor(open ? editor : null)}
+          shift={selectedShift as Shift}
+          areas={groups}
+          staff={staff}
+          onSave={(updated) => {
+            const newRoster = { ...activeRoster, shifts: activeRoster.shifts.map((s) => s.id === (selectedShift as Shift).id ? { ...s, ...updated } : s) };
+            updateRoster(newRoster);
+            toast({ title: "Shift updated", description: `${format(parseISO(`${day}T${updated.start}:00`), 'p')} – ${format(parseISO(`${day}T${updated.end}:00`), 'p')}` });
+            setEditor(null);
+          }}
+          onRemove={() => {
+            const newRoster = { ...activeRoster, shifts: activeRoster.shifts.filter((s) => s.id !== (selectedShift as Shift).id) };
+            updateRoster(newRoster);
+            toast({ title: "Shift removed" });
+            setEditor(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
