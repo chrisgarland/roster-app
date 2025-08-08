@@ -55,7 +55,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
               {dayRosters.length === 0 && (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <button className="text-xs text-muted-foreground hover:text-foreground story-link" onClick={(e) => e.stopPropagation()}>
+                    <button className="block w-full text-left px-2 text-xs text-muted-foreground hover:text-foreground story-link" onClick={(e) => e.stopPropagation()}>
                       + Add daily roster
                     </button>
                   </DialogTrigger>
