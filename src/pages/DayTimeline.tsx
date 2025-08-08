@@ -102,7 +102,7 @@ export default function DayTimeline() {
             <div className="h-8 pr-2 border-r flex items-center">
               <div className="text-sm font-semibold">{group.area}</div>
             </div>
-            <div className="h-8 border-b bg-muted/30 rounded-sm" />
+            <div className="border-b" />
 
             {/* Section rows */}
             {group.sections.map((section) => (
