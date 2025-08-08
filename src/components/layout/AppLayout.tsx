@@ -13,9 +13,6 @@ export default function AppLayout() {
 <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="ml-1" />
-              <div className="inline-flex items-center rounded-md px-2 py-1 bg-primary/10 text-primary text-sm font-bold font-display tracking-tight">
-                RosterFlow
-              </div>
             </div>
             <nav className="ml-auto flex items-center gap-2">
               <DropdownMenu>
