@@ -18,7 +18,7 @@ export default function AppLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="rounded-full ring-inset ring-1 ring-primary/20 bg-primary/5 hover:bg-primary/10 hover:ring-primary/30 transition-colors shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:ring-primary/50"
+                    className="rounded-full p-0.5 ring-inset ring-2 ring-primary/30 ring-offset-2 ring-offset-background bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:ring-primary/40 transition-colors hover-scale shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:ring-primary/60"
                     aria-label="Open account menu"
                     title="My account"
                   >
