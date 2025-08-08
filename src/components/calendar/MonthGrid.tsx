@@ -11,7 +11,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
 
   const [rosters, setRosters] = useState<Record<string, Roster[]>>({
     [format(new Date(), 'yyyy-MM-dd')]: [
-      { id: '1', title: 'Lunch Service', area: 'Bar', section: 'Front Bar' }
+      { id: '1', title: 'Lunch Service', shifts: [{ staff: 'Alex', area: 'Bar', section: 'Front Bar', start: '10:00', end: '14:00' }] }
     ]
   });
 
@@ -47,7 +47,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                     <span aria-hidden className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary/70 ring-2 ring-primary/20" />
                     <div className="min-w-0">
                       <div className="font-medium truncate">{r.title}</div>
-                      <div className="text-muted-foreground truncate">{r.area} • {r.section}</div>
+                      <div className="text-muted-foreground truncate">{r.shifts?.length || 0} {r.shifts?.length === 1 ? 'shift' : 'shifts'}</div>
                     </div>
                   </div>
                 </button>
