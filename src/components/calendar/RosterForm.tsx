@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
 import { useActiveLocation, useStaff } from "@/data/hooks";
 import type { Roster as StoreRoster, StaffRecord, Area } from "@/data/types";
+import { toast } from "@/components/ui/use-toast";
 
 // Areas and sections are derived from the active location
 
@@ -101,6 +102,11 @@ export default function RosterForm({
         className="grid gap-6"
         onSubmit={form.handleSubmit((values) => {
           if (!active?.id) return;
+          if (!values.shifts || values.shifts.length === 0) {
+            toast({ title: "Add at least one shift", description: "Please add a shift before saving.", variant: "destructive" });
+            console.warn("[RosterForm] Attempted save with 0 shifts");
+            return;
+          }
           const payload: Omit<StoreRoster, "id"> = {
             dateISO: formatDate(defaultDate, "yyyy-MM-dd"),
             locationId: active.id,
@@ -117,7 +123,10 @@ export default function RosterForm({
               notes: s.notes,
             })),
           };
+          console.log("[RosterForm] Saving roster", { title: values.title, shiftCount: values.shifts.length });
           onSubmit(payload);
+          form.reset({ title: "", description: "", shifts: [] });
+          toast({ title: "Roster saved", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
         })}
       >
         {/* Top fields */}
@@ -254,7 +263,7 @@ export default function RosterForm({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button type="submit">Save Roster</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting || (shifts?.length || 0) === 0}>Save Roster</Button>
         </div>
       </form>
     </Form>
@@ -301,10 +310,7 @@ function AddShiftForm({
 
   return (
     <Form {...form}>
-      <form
-        className="grid gap-4"
-        onSubmit={form.handleSubmit((values) => onAdd(values))}
-      >
+      <div className="grid gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Role */}
           <FormField name="role" control={form.control} render={({ field }) => (
@@ -438,10 +444,20 @@ function AddShiftForm({
         </div>
 
         <div className="flex justify-between gap-2 pt-2">
-          <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" disabled={staff.length === 0}>+ Add Shift</Button>
+          <Button type="button" variant="secondary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCancel(); }}>Cancel</Button>
+          <Button
+            type="button"
+            disabled={staff.length === 0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit((values) => onAdd(values))();
+            }}
+          >
+            + Add Shift
+          </Button>
         </div>
-      </form>
+      </div>
     </Form>
   );
 }

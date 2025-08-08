@@ -41,7 +41,9 @@ function reducer(state: AppState, action: Action): AppState {
     }
     case "addRoster": {
       const id = makeId();
-      return { ...state, rosters: [...state.rosters, { ...action.payload.roster, id }] };
+      const rosterWithId = { ...action.payload.roster, id };
+      console.log("[Store] addRoster", { title: rosterWithId.title, dateISO: rosterWithId.dateISO, locationId: rosterWithId.locationId, shiftCount: rosterWithId.shifts?.length ?? 0 });
+      return { ...state, rosters: [...state.rosters, rosterWithId] };
     }
     default:
       return state;
