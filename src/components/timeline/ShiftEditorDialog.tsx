@@ -14,7 +14,7 @@ export type ShiftUpdate = Omit<Shift, "id">;
 
 const schema = z
   .object({
-    staffId: z.string().optional().default(""),
+    staffId: z.string().min(1, "Staff is required"),
     role: z.string().min(1, "Role is required"),
     areaId: z.string().min(1, "Area is required"),
     section: z.string().min(1, "Section is required"),
@@ -47,7 +47,7 @@ export default function ShiftEditorDialog({
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      staffId: shift.staffId || "",
+      staffId: shift.staffId ?? staff[0]?.id ?? "",
       role: shift.role,
       areaId: shift.areaId,
       section: shift.section,
@@ -169,11 +169,10 @@ export default function ShiftEditorDialog({
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Unassigned" />
+                        <SelectValue placeholder="Select staff" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
                       {staff.map((s) => (
                         <SelectItem key={s.id} value={s.id}>{s.name}{s.role ? ` – ${s.role}` : ""}</SelectItem>
                       ))}
