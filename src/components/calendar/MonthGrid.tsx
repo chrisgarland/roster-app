@@ -1,6 +1,6 @@
 import { addDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import RosterForm, { Roster } from "./RosterForm";
 
@@ -36,17 +36,6 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
               <div className="text-sm font-medium">
                 <span className={isToday(d) ? 'text-primary font-semibold' : 'text-foreground'}>{format(d, 'd')}</span>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={(e) => e.stopPropagation()}>Add</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add Daily Roster</DialogTitle>
-                  </DialogHeader>
-                  <RosterForm defaultDate={d} onSubmit={(r) => addRoster(key, r)} />
-                </DialogContent>
-              </Dialog>
             </div>
             <div className="space-y-2">
               {dayRosters.map((r) => (
