@@ -29,7 +29,7 @@ export function AppSidebar() {
       <SidebarHeader className="h-14 flex items-center px-3">
         <div className="inline-flex h-8 items-center rounded-md px-2 bg-primary/10 text-primary text-sm font-bold font-display tracking-tight hover-scale ring-1 ring-primary/20">RosterFlow</div>
       </SidebarHeader>
-      <SidebarContent className="bg-sidebar">
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
