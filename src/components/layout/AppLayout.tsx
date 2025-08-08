@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 export default function AppLayout() {
   return <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar className="bg-slate-100" />
+        <AppSidebar />
         <SidebarInset>
         <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b backdrop-blur px-3 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 shadow-sm bg-slate-200">
             <div className="flex items-center gap-2">
