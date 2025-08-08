@@ -27,7 +27,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="px-3 py-2">
-        <div className="text-base font-bold font-display tracking-tight">RosterFlow</div>
+        <div className="inline-flex items-center rounded-md px-2 py-1 bg-primary/10 text-primary text-base font-bold font-display tracking-tight">RosterFlow</div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
