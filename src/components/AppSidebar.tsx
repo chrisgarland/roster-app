@@ -24,7 +24,7 @@ export function AppSidebar() {
   }];
   return <Sidebar>
       <SidebarHeader className="h-14 flex items-center justify-center px-3 bg-slate-200">
-        <div className="self-center text-2xl font-bold font-playfair tracking-tight">RosterPro</div>
+        <div className="self-center inline-flex items-center gap-2 text-2xl font-bold font-playfair tracking-tight"><CalendarDays className="h-6 w-6" aria-hidden /><span>RosterPro</span></div>
       </SidebarHeader>
       <SidebarContent className="bg-slate-200">
         <SidebarGroup>
