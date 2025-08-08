@@ -33,7 +33,7 @@ export default function AppLayout() {
               </DropdownMenu>
             </nav>
           </header>
-          <div className="p-4 animate-fade-in">
+          <div className="p-4 bg-sidebar animate-fade-in">
             <Outlet />
           </div>
         </SidebarInset>
