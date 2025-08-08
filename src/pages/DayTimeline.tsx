@@ -107,7 +107,7 @@ export default function DayTimeline() {
             {/* Section rows */}
             {group.sections.map((section) => (
               <React.Fragment key={`${group.area}-${section}`}>
-                <div className="h-16 pr-2 border-r flex items-center">
+                <div className="h-16 pr-2 pl-6 border-r flex items-center">
                   <div className="text-sm font-medium">{section}</div>
                 </div>
                 <div className="relative h-16 rounded-md bg-muted/40">
