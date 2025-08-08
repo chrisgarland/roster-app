@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useStaff } from "@/data/hooks";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 
@@ -24,15 +24,14 @@ const StaffSchema = z.object({
   availability: z.array(z.enum(DAYS)).default([]),
 });
 
-type StaffForm = z.infer<typeof StaffSchema> & { id?: string };
 
-type StaffRecord = StaffForm & { id: string };
+type StaffForm = z.infer<typeof StaffSchema>;
 
 const ROLES = ["Bartender", "Chef", "Server", "Host", "Manager"];
 
 export default function Staff() {
   const { toast } = useToast();
-  const [staff, setStaff] = useLocalStorage<StaffRecord[]>("staff:list", []);
+  const { staff, add, remove: removeStaff } = useStaff();
   const [tab, setTab] = useState("add");
 
   const form = useForm<StaffForm>({ resolver: zodResolver(StaffSchema), defaultValues: { availability: [], payRate: 0 } });
@@ -44,15 +43,16 @@ export default function Staff() {
   const count = staff.length;
 
   const onSubmit = (values: StaffForm) => {
-    const record: StaffRecord = { ...values, id: crypto.randomUUID() };
-    setStaff([record, ...staff]);
+    const DAY_TO_ABBR: Record<string, string> = { Monday:"Mon", Tuesday:"Tue", Wednesday:"Wed", Thursday:"Thu", Friday:"Fri", Saturday:"Sat", Sunday:"Sun" };
+    const payload = { ...values, availability: (values.availability || []).map((d) => DAY_TO_ABBR[d] || d) } as any;
+    add(payload);
     toast({ title: "Staff added", description: `${values.name} has been added.` });
     form.reset({ availability: [], payRate: 0 });
     setTab("manage");
   };
 
-  const remove = (id: string) => {
-    setStaff(staff.filter((s) => s.id !== id));
+  const onRemove = (id: string) => {
+    removeStaff(id);
     toast({ title: "Removed", description: "Staff member removed." });
   };
 
@@ -199,7 +199,7 @@ export default function Staff() {
                           <td className="py-2 pr-2">{s.payRate ? `$${Number(s.payRate).toFixed(2)}` : "—"}</td>
                           <td className="py-2 pr-2">{s.availability?.length ? s.availability.join(", ") : "—"}</td>
                           <td className="py-2 pr-2 text-right">
-                            <Button variant="ghost" size="sm" onClick={() => remove(s.id)}>Remove</Button>
+                            <Button variant="ghost" size="sm" onClick={() => onRemove(s.id)}>Remove</Button>
                           </td>
                         </tr>
                       ))}

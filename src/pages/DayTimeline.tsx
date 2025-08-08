@@ -1,22 +1,9 @@
 import { eachHourOfInterval, format, parseISO } from "date-fns";
 import React, { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { useActiveLocation, useRostersByDate, useStaff } from "@/data/hooks";
 
-type Shift = {
-  id: string;
-  area: string;
-  section: string; // REQUIRED: every shift is assigned to a Section
-  staff: string;
-  start: string; // ISO datetime
-  end: string; // ISO datetime
-  color: string; // CSS color string
-};
-
-const areas = [
-  { area: "Bar", sections: ["Front Bar", "Beer Garden"] },
-  { area: "Kitchen", sections: ["Pass", "Prep"] },
-  { area: "Floor", sections: ["Main", "Function Room"] },
-];
+// Data is sourced from the central store via hooks.
 
 export default function DayTimeline() {
   const { date } = useParams();
@@ -26,43 +13,17 @@ export default function DayTimeline() {
     document.title = `Day – ${format(parseISO(`${day}T00:00:00`), "PPP")}`;
   }, [day]);
 
-  // Flat list of all sections so each section gets its own dedicated row
-  const sectionRows = useMemo(
-    () =>
-      areas.flatMap((a) => a.sections.map((s) => ({ area: a.area, section: s }))),
-    []
-  );
+  // Active location and data from store
+  const active = useActiveLocation();
+  const groups = active?.areas ?? [];
+  const { staff } = useStaff();
+  const rosters = useRostersByDate(day, active?.id);
 
-  // Mock shifts (every shift MUST have a section)
-  const mockShifts: Shift[] = [
-    {
-      id: "1",
-      area: "Bar",
-      section: "Front Bar",
-      staff: "Alex",
-      start: `${day}T10:00:00`,
-      end: `${day}T14:00:00`,
-      color: "hsl(var(--primary))",
-    },
-    {
-      id: "2",
-      area: "Kitchen",
-      section: "Pass",
-      staff: "Sam",
-      start: `${day}T12:00:00`,
-      end: `${day}T20:00:00`,
-      color: "hsl(var(--accent))",
-    },
-    {
-      id: "3",
-      area: "Floor",
-      section: "Main",
-      staff: "Pat",
-      start: `${day}T18:00:00`,
-      end: `${day}T22:00:00`,
-      color: "hsl(var(--primary))",
-    },
-  ];
+  const allShifts = useMemo(() => rosters.flatMap((r) => r.shifts), [rosters]);
+  const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
+
+  const parseTime = (hm: string) => parseISO(`${day}T${hm}:00`);
+
 
   // Timeline bounds 8:00 -> 23:00
   const startRef = parseISO("2020-01-01T08:00:00");
@@ -96,17 +57,17 @@ export default function DayTimeline() {
         </div>
 
         {/* Area groups */}
-        {areas.map((group) => (
-          <React.Fragment key={group.area}>
+        {groups.map((group) => (
+          <React.Fragment key={group.id}>
             {/* Area header row */}
             <div className="h-8 pr-2 border-r flex items-center">
-              <div className="text-sm font-semibold">{group.area}</div>
+              <div className="text-sm font-semibold">{group.name}</div>
             </div>
             <div className="border-b" />
 
             {/* Section rows */}
             {group.sections.map((section) => (
-              <React.Fragment key={`${group.area}-${section}`}>
+              <React.Fragment key={`${group.id}-${section}`}>
                 <div className="h-16 pr-2 pl-6 border-r flex items-center">
                   <div className="text-sm font-medium">{section}</div>
                 </div>
@@ -114,29 +75,30 @@ export default function DayTimeline() {
                   {/* Hour grid lines */}
                   <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${ticks.length}, minmax(64px, 1fr))` }}>
                     {ticks.map((h) => (
-                      <div key={`${group.area}-${section}-${h.toISOString()}`} className="border-l/50 border-l first:border-l-0" />
+                      <div key={`${group.id}-${section}-${h.toISOString()}`} className="border-l/50 border-l first:border-l-0" />
                     ))}
                   </div>
 
                   {/* Shifts for this exact Section */}
-                  {mockShifts
-                    .filter((sh) => sh.area === group.area && sh.section === section)
+                  {allShifts
+                    .filter((sh) => sh.areaId === group.id && sh.section === section)
                     .map((sh) => {
-                      const s = parseISO(sh.start);
-                      const e = parseISO(sh.end);
+                      const s = parseTime(sh.start);
+                      const e = parseTime(sh.end);
                       const left = getLeftPercent(s);
                       const width = getWidthPercent(s, e);
+                      const staffLabel = sh.staffId ? (staffMap.get(sh.staffId)?.name ?? "Unassigned") : "Unassigned";
 
                       return (
                         <div
                           key={sh.id}
                           className="absolute top-1 h-14 rounded-md text-xs font-medium px-2 py-1 shadow"
-                          style={{ left: `${left}%`, width: `${width}%`, background: sh.color, color: 'hsl(var(--primary-foreground))' }}
-                          aria-label={`${sh.staff} • ${section} • ${format(s, 'p')}–${format(e, 'p')}`}
+                          style={{ left: `${left}%`, width: `${width}%`, background: "hsl(var(--primary))", color: 'hsl(var(--primary-foreground))' }}
+                          aria-label={`${staffLabel} • ${section} • ${format(s, 'p')}–${format(e, 'p')}`}
                         >
                           <div className="flex items-center gap-2 truncate">
                             <span className="inline-flex items-center rounded-sm bg-background/20 px-1.5 py-0.5 text-[10px]">{section}</span>
-                            <span className="truncate">{sh.staff}</span>
+                            <span className="truncate">{staffLabel}</span>
                           </div>
                           <div className="opacity-85 text-[11px]">{format(s, 'p')} – {format(e, 'p')}</div>
                         </div>
