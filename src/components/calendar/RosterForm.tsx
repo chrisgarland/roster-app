@@ -10,30 +10,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useEffect, useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useActiveLocation, useStaff } from "@/data/hooks";
+import type { Roster as StoreRoster, Shift as StoreShift, StaffRecord } from "@/data/types";
 
-// Areas and sections
-const AREA_SECTIONS: { area: string; sections: string[] }[] = [
-  { area: "Bar", sections: ["Front Bar", "Beer Garden"] },
-  { area: "Kitchen", sections: ["Pass", "Prep"] },
-  { area: "Dining Room", sections: ["Main", "Private"] },
-  { area: "Reception", sections: ["Front Desk"] },
-];
+// Areas and sections are derived from the active location
 
-// Minimal Staff shape from Staff page
-type StaffRecord = {
-  id: string;
-  name: string;
-  role?: string;
-  payRate?: number;
-};
 
 const ShiftSchema = z
   .object({
-    staff: z.string().min(1, "Staff is required"), // store staff name for display
     staffId: z.string().min(1, "Staff is required"),
     role: z.string().min(1, "Role is required"),
-    area: z.string().min(1, "Area is required"),
+    areaId: z.string().min(1, "Area is required"),
     section: z.string().min(1, "Section is required"),
     start: z.string().min(1, "Start time is required"), // HH:mm
     end: z.string().min(1, "End time is required"),
@@ -58,27 +45,32 @@ export default function RosterForm({
   onSubmit,
 }: {
   defaultDate: Date;
-  onSubmit: (r: Roster) => void;
+  onSubmit: (r: Omit<StoreRoster, "id">) => void;
 }) {
   const form = useForm<z.infer<typeof RosterSchema>>({
     resolver: zodResolver(RosterSchema),
     defaultValues: { title: "", description: "", shifts: [] },
   });
 
-  const { control, setValue, watch } = form;
-  const { fields, append } = useFieldArray({ control, name: "shifts" });
+  const { control } = form;
+  const { append } = useFieldArray({ control, name: "shifts" });
 
-  // Staff list from localStorage
-  const [staff] = useLocalStorage<StaffRecord[]>("staff:list", []);
+  // Active location + staff from store
+  const active = useActiveLocation();
+  const areas = active?.areas ?? [];
+  const { staff } = useStaff();
+
   const roles = useMemo(() => {
     const set = new Set<string>();
     staff.forEach((s) => s.role && set.add(s.role));
     return Array.from(set);
   }, [staff]);
 
-  const shifts = watch("shifts");
+  const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
 
-  const getSections = (area?: string) => AREA_SECTIONS.find((a) => a.area === area)?.sections ?? [];
+  const shifts = form.watch("shifts");
+
+  const getSections = (areaId?: string) => areas.find((a) => a.id === areaId)?.sections ?? [];
 
   const parseMinutes = (t: string) => {
     const [h, m] = t.split(":").map((n) => Number(n));
@@ -86,8 +78,8 @@ export default function RosterForm({
   };
 
   const stats = useMemo(() => {
-    const totalHours = (shifts || []).reduce((acc, s) => acc + Math.max(0, parseMinutes(s.end) - parseMinutes(s.start)) / 60, 0);
-    const totalCost = (shifts || []).reduce((acc, s) => {
+    const totalHours = (shifts || []).reduce((acc: number, s: any) => acc + Math.max(0, parseMinutes(s.end) - parseMinutes(s.start)) / 60, 0);
+    const totalCost = (shifts || []).reduce((acc: number, s: any) => {
       const st = staff.find((x) => x.id === s.staffId);
       const rate = Number(st?.payRate || 0);
       const hours = Math.max(0, parseMinutes(s.end) - parseMinutes(s.start)) / 60;
@@ -107,7 +99,26 @@ export default function RosterForm({
     <Form {...form}>
       <form
         className="grid gap-6"
-        onSubmit={form.handleSubmit((values) => onSubmit({ id: crypto.randomUUID?.() || Date.now().toString(), ...values }))}
+        onSubmit={form.handleSubmit((values) => {
+          if (!active?.id) return;
+          const payload: Omit<StoreRoster, "id"> = {
+            dateISO: formatDate(defaultDate, "yyyy-MM-dd"),
+            locationId: active.id,
+            title: values.title,
+            description: values.description,
+            shifts: (values.shifts || []).map((s) => ({
+              id: (crypto.randomUUID?.() || Date.now().toString()),
+              role: s.role,
+              areaId: s.areaId,
+              section: s.section,
+              staffId: s.staffId,
+              start: s.start,
+              end: s.end,
+              notes: s.notes,
+            })),
+          };
+          onSubmit(payload);
+        })}
       >
         {/* Top fields */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

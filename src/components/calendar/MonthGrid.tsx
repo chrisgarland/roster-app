@@ -2,7 +2,10 @@ import { addDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth,
 import { useMemo, useState } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import RosterForm, { Roster } from "./RosterForm";
+import RosterForm from "./RosterForm";
+import { useAddRoster } from "@/data/hooks";
+import { useStoreInternal } from "@/data/store";
+import { useActiveLocation } from "@/data/hooks";
 
 export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: Date) => void }) {
   const start = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
