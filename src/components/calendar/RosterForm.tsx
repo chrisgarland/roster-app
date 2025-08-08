@@ -281,7 +281,7 @@ function AddShiftForm({
     resolver: zodResolver(schema),
     defaultValues: {
       staffId: "",
-      role: roles[0] || "",
+      role: roles[0] || "Staff",
       areaId: areas[0]?.id || "",
       section: getSections(areas[0]?.id)[0] || "",
       start: "10:00",
@@ -405,13 +405,13 @@ function AddShiftForm({
                 }}
               >
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger disabled={staff.length === 0}>
                     <SelectValue placeholder="Select a team member" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {staff.length === 0 ? (
-                    <SelectItem value="">No staff yet</SelectItem>
+                    <SelectItem value="no-staff" disabled>No staff yet</SelectItem>
                   ) : (
                     staff.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
@@ -439,7 +439,7 @@ function AddShiftForm({
 
         <div className="flex justify-between gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-          <Button type="submit">+ Add Shift</Button>
+          <Button type="submit" disabled={staff.length === 0}>+ Add Shift</Button>
         </div>
       </form>
     </Form>
