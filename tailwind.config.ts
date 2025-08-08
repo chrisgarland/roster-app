@@ -66,6 +66,7 @@ export default {
 			fontFamily: {
 				sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
 				display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+				playfair: ["Playfair Display", "serif"],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
