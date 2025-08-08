@@ -6,6 +6,7 @@ import RosterForm from "./RosterForm";
 import { useAddRoster } from "@/data/hooks";
 import { useStoreInternal } from "@/data/store";
 import { useActiveLocation } from "@/data/hooks";
+import { useUpdateRoster } from "@/data/hooks";
 
 export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: Date) => void }) {
   const start = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
@@ -15,6 +16,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
   const { state } = useStoreInternal();
   const active = useActiveLocation();
   const addRoster = useAddRoster();
+  const updateRoster = useUpdateRoster();
 
   const rosterByDay = useMemo(() => {
     const map: Record<string, any[]> = {};
@@ -45,18 +47,40 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
             </div>
             <div className="space-y-2">
               {dayRosters.map((r) => (
-                <button
-                  key={r.id}
-                  className="relative w-full text-left text-xs rounded-md px-2 py-2 bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors shadow-sm hover:shadow-md" onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-start gap-2">
-                    <span aria-hidden className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary/70 ring-2 ring-primary/20" />
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{r.title}</div>
-                      <div className="text-muted-foreground truncate">{r.shifts?.length || 0} {r.shifts?.length === 1 ? 'shift' : 'shifts'}</div>
-                    </div>
-                  </div>
-                </button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      key={r.id}
+                      className="relative w-full text-left text-xs rounded-md px-2 py-2 bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors shadow-sm hover:shadow-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span aria-hidden className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary/70 ring-2 ring-primary/20" />
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{r.title}</div>
+                          <div className="text-muted-foreground truncate">{r.shifts?.length || 0} {r.shifts?.length === 1 ? 'shift' : 'shifts'}</div>
+                        </div>
+                      </div>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent
+                    className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <DialogHeader>
+                      <DialogTitle>Edit Daily Roster</DialogTitle>
+                      <DialogDescription>Update title, description, and shifts for this roster.</DialogDescription>
+                    </DialogHeader>
+                    <RosterForm
+                      defaultDate={new Date(r.dateISO)}
+                      roster={r}
+                      onSubmit={(payload) => {
+                        updateRoster({ ...r, ...payload, id: r.id });
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
               ))}
               {dayRosters.length === 0 && (
                 <Dialog>

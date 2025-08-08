@@ -40,3 +40,8 @@ export function useAddRoster() {
   const { dispatch } = useStoreInternal();
   return useCallback((roster: Omit<Roster, "id">) => dispatch({ type: "addRoster", payload: { roster } }), [dispatch]);
 }
+
+export function useUpdateRoster() {
+  const { dispatch } = useStoreInternal();
+  return useCallback((roster: Roster) => dispatch({ type: "updateRoster", payload: { roster } }), [dispatch]);
+}

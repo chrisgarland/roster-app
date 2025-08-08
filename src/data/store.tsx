@@ -10,7 +10,8 @@ type Action =
   | { type: "setActiveLocation"; payload: { id: ID | undefined } }
   | { type: "addStaff"; payload: { staff: Omit<StaffRecord, "id"> } }
   | { type: "removeStaff"; payload: { id: ID } }
-  | { type: "addRoster"; payload: { roster: Omit<Roster, "id"> } };
+  | { type: "addRoster"; payload: { roster: Omit<Roster, "id"> } }
+  | { type: "updateRoster"; payload: { roster: Roster } };
 
 const initialState: AppState = {
   locations: [],
@@ -44,6 +45,10 @@ function reducer(state: AppState, action: Action): AppState {
       const rosterWithId = { ...action.payload.roster, id };
       console.log("[Store] addRoster", { title: rosterWithId.title, dateISO: rosterWithId.dateISO, locationId: rosterWithId.locationId, shiftCount: rosterWithId.shifts?.length ?? 0 });
       return { ...state, rosters: [...state.rosters, rosterWithId] };
+    }
+    case "updateRoster": {
+      console.log("[Store] updateRoster", { id: action.payload.roster.id, title: action.payload.roster.title, dateISO: action.payload.roster.dateISO, shiftCount: action.payload.roster.shifts?.length ?? 0 });
+      return { ...state, rosters: state.rosters.map((r) => (r.id === action.payload.roster.id ? action.payload.roster : r)) };
     }
     default:
       return state;

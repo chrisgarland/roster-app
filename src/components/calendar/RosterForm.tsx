@@ -44,17 +44,38 @@ export type Roster = z.infer<typeof RosterSchema> & { id: string };
 export default function RosterForm({
   defaultDate,
   onSubmit,
+  roster,
 }: {
   defaultDate: Date;
   onSubmit: (r: Omit<StoreRoster, "id">) => void;
+  roster?: StoreRoster;
 }) {
+  const initialDefaults = useMemo(() => {
+    if (roster) {
+      return {
+        title: roster.title || "",
+        description: roster.description || "",
+        shifts: (roster.shifts || []).map((s) => ({
+          staffId: s.staffId || "",
+          role: s.role,
+          areaId: s.areaId,
+          section: s.section,
+          start: s.start,
+          end: s.end,
+          notes: s.notes || "",
+        })),
+      };
+    }
+    return { title: "", description: "", shifts: [] };
+  }, [roster]);
+
   const form = useForm<z.infer<typeof RosterSchema>>({
     resolver: zodResolver(RosterSchema),
-    defaultValues: { title: "", description: "", shifts: [] },
+    defaultValues: initialDefaults,
   });
 
   const { control } = form;
-  const { append } = useFieldArray({ control, name: "shifts" });
+  const { append, remove } = useFieldArray({ control, name: "shifts" });
 
   // Active location + staff from store
   const active = useActiveLocation();
@@ -70,6 +91,12 @@ export default function RosterForm({
   const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
 
   const shifts = form.watch("shifts");
+
+  useEffect(() => {
+    if (roster) {
+      form.reset(initialDefaults);
+    }
+  }, [roster, form, initialDefaults]);
 
   const getSections = (areaId?: string) => areas.find((a) => a.id === areaId)?.sections ?? [];
 
@@ -101,7 +128,7 @@ export default function RosterForm({
       <form
         className="grid gap-6"
         onSubmit={form.handleSubmit((values) => {
-          if (!active?.id) return;
+          if (!active?.id && !roster?.locationId) return;
           if (!values.shifts || values.shifts.length === 0) {
             toast({ title: "Add at least one shift", description: "Please add a shift before saving.", variant: "destructive" });
             console.warn("[RosterForm] Attempted save with 0 shifts");
@@ -109,7 +136,7 @@ export default function RosterForm({
           }
           const payload: Omit<StoreRoster, "id"> = {
             dateISO: formatDate(defaultDate, "yyyy-MM-dd"),
-            locationId: active.id,
+            locationId: roster?.locationId ?? (active!.id as string),
             title: values.title,
             description: values.description,
             shifts: (values.shifts || []).map((s) => ({
@@ -125,8 +152,12 @@ export default function RosterForm({
           };
           console.log("[RosterForm] Saving roster", { title: values.title, shiftCount: values.shifts.length });
           onSubmit(payload);
-          form.reset({ title: "", description: "", shifts: [] });
-          toast({ title: "Roster saved", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
+          if (!roster) {
+            form.reset({ title: "", description: "", shifts: [] });
+            toast({ title: "Roster saved", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
+          } else {
+            toast({ title: "Roster updated", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
+          }
         })}
       >
         {/* Top fields */}
@@ -147,7 +178,7 @@ export default function RosterForm({
 
           <div className="md:col-span-1">
             <FormLabel>Date</FormLabel>
-            <Input value={formatDate(defaultDate, "dd/MM/yyyy")} disabled readOnly />
+            <Input value={formatDate(defaultDate, "dd/MM/yyyy")} disabled readOnly aria-label="Roster date" />
           </div>
         </div>
 
@@ -220,19 +251,19 @@ export default function RosterForm({
         {/* Areas */}
         <div className="space-y-3">
           {areas.map((a) => {
-            const list = (shifts || []).filter((s) => s.areaId === a.id);
+            const pairs = (shifts || []).map((s, i) => [s, i] as const).filter(([s]) => s.areaId === a.id);
             return (
               <Card key={a.id}>
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium">{a.name}</div>
-                    <div className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? "shift" : "shifts"}</div>
+                    <div className="text-xs text-muted-foreground">{pairs.length} {pairs.length === 1 ? "shift" : "shifts"}</div>
                   </div>
-                  {list.length === 0 ? (
+                  {pairs.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No shifts assigned to this area</p>
                   ) : (
                     <ul className="space-y-2">
-                      {list.map((s, idx) => {
+                      {pairs.map(([s, idx]) => {
                         const staffRec = staffMap.get(s.staffId);
                         return (
                           <li key={`${a.id}-${idx}`} className="text-sm flex items-center justify-between gap-2">
@@ -251,6 +282,7 @@ export default function RosterForm({
                                 </>
                               ) : null}
                             </div>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); remove(idx); }}>Remove</Button>
                           </li>
                         );
                       })}
@@ -263,7 +295,7 @@ export default function RosterForm({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={form.formState.isSubmitting || (shifts?.length || 0) === 0}>Save Roster</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting || (shifts?.length || 0) === 0}>{roster ? "Save Changes" : "Save Roster"}</Button>
         </div>
       </form>
     </Form>
