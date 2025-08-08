@@ -17,7 +17,11 @@ export default function AppLayout() {
             <nav className="ml-auto flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="rounded-full outline-none focus:ring-2 focus:ring-primary">
+                  <button
+                    className="rounded-full ring-inset ring-1 ring-primary/20 bg-primary/5 hover:bg-primary/10 hover:ring-primary/30 transition-colors shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:ring-primary/50"
+                    aria-label="Open account menu"
+                    title="My account"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="" alt="User avatar" />
                       <AvatarFallback>RF</AvatarFallback>
