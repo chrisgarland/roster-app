@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Areas and sections used across the app
 const AREA_SECTIONS: { area: string; sections: string[] }[] = [
@@ -42,6 +43,12 @@ export default function RosterForm({ defaultDate, onSubmit }: { defaultDate: Dat
   const { control, setValue, watch } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "shifts" });
 
+  const [shiftOpen, setShiftOpen] = useState(false);
+  const shiftForm = useForm<Shift>({
+    resolver: zodResolver(ShiftSchema),
+    defaultValues: { staff: "", area: "Bar", section: "Front Bar", start: "09:00", end: "17:00" },
+  });
+
   useEffect(() => {
     if (fields.length === 0) {
       append({ staff: "", area: "Bar", section: "Front Bar", start: "10:00", end: "14:00" });
@@ -70,7 +77,7 @@ export default function RosterForm({ defaultDate, onSubmit }: { defaultDate: Dat
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <FormLabel>Shifts</FormLabel>
-            <Button type="button" variant="secondary" onClick={() => append({ staff: "", area: "Bar", section: "Front Bar", start: "09:00", end: "17:00" })}>
+            <Button type="button" variant="secondary" onClick={() => setShiftOpen(true)}>
               Add Shift
             </Button>
           </div>
@@ -165,6 +172,109 @@ export default function RosterForm({ defaultDate, onSubmit }: { defaultDate: Dat
             })}
           </div>
         </div>
+
+        <Dialog open={shiftOpen} onOpenChange={setShiftOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Shift</DialogTitle>
+            </DialogHeader>
+            <Form {...shiftForm}>
+              <form
+                className="grid gap-3"
+                onSubmit={shiftForm.handleSubmit((values) => {
+                  append(values);
+                  setShiftOpen(false);
+                  shiftForm.reset({ staff: "", area: "Bar", section: "Front Bar", start: "09:00", end: "17:00" });
+                })}
+              >
+                <FormField control={shiftForm.control} name="staff" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Staff</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Alex" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <FormField control={shiftForm.control} name="area" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Area</FormLabel>
+                      <Select value={field.value} onValueChange={(val) => {
+                        field.onChange(val);
+                        const firstSection = getSections(val)[0] ?? "";
+                        shiftForm.setValue("section", firstSection);
+                      }}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select area" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {AREA_SECTIONS.map((a) => (
+                            <SelectItem key={a.area} value={a.area}>{a.area}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={shiftForm.control} name="section" render={({ field }) => {
+                    const areaVal = shiftForm.watch("area");
+                    const sections = getSections(areaVal);
+                    return (
+                      <FormItem>
+                        <FormLabel>Section</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select section" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sections.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }} />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={shiftForm.control} name="start" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={shiftForm.control} name="end" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="ghost" onClick={() => setShiftOpen(false)}>Cancel</Button>
+                  <Button type="submit">Add Shift</Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
 
         <div className="flex justify-end gap-2">
           <Button type="submit">Save Roster</Button>
