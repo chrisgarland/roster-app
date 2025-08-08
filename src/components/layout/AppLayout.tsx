@@ -3,14 +3,19 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import LocationSwitcher from "@/components/LocationSwitcher";
+import OnboardingGate from "@/components/OnboardingGate";
+
 export default function AppLayout() {
-  return <SidebarProvider>
+  return (
+    <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar className="bg-sidebar" />
         <SidebarInset>
-        <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b px-3 bg-sidebar shadow-sm">
+          <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b px-3 bg-sidebar shadow-sm">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="ml-1" />
+              <LocationSwitcher />
             </div>
             <nav className="ml-auto flex items-center gap-2">
               <DropdownMenu>
@@ -37,6 +42,8 @@ export default function AppLayout() {
             <Outlet />
           </div>
         </SidebarInset>
+        <OnboardingGate />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 }

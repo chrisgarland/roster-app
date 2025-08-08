@@ -10,28 +10,31 @@ import CalendarMonth from "./pages/CalendarMonth";
 import DayTimeline from "./pages/DayTimeline";
 import Locations from "./pages/Locations";
 import Staff from "./pages/Staff";
+import { StoreProvider } from "@/data/store";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/app" element={<AppLayout />}>
-            <Route path="calendar" element={<CalendarMonth />} />
-            <Route path="day/:date" element={<DayTimeline />} />
-            <Route path="locations" element={<Locations />} />
-            <Route path="staff" element={<Staff />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <StoreProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/app" element={<AppLayout />}>
+              <Route path="calendar" element={<CalendarMonth />} />
+              <Route path="day/:date" element={<DayTimeline />} />
+              <Route path="locations" element={<Locations />} />
+              <Route path="staff" element={<Staff />} />
+            </Route>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </StoreProvider>
   </QueryClientProvider>
 );
 
