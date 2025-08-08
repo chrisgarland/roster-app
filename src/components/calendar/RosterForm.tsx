@@ -5,169 +5,421 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useEffect, useMemo, useState } from "react";
+import { format as formatDate } from "date-fns";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-// Areas and sections used across the app
+// Areas and sections
 const AREA_SECTIONS: { area: string; sections: string[] }[] = [
   { area: "Bar", sections: ["Front Bar", "Beer Garden"] },
   { area: "Kitchen", sections: ["Pass", "Prep"] },
-  { area: "Floor", sections: ["Main", "Function Room"] },
+  { area: "Dining Room", sections: ["Main", "Private"] },
+  { area: "Reception", sections: ["Front Desk"] },
 ];
 
-const ShiftSchema = z.object({
-  staff: z.string().min(1, "Staff is required"),
-  area: z.string().min(1, "Area is required"),
-  section: z.string().min(1, "Section is required"),
-  start: z.string().min(1, "Start time is required"), // HH:mm
-  end: z.string().min(1, "End time is required"),
-}).refine((s) => s.start < s.end, {
-  path: ["end"],
-  message: "End must be after start",
-});
+// Minimal Staff shape from Staff page
+type StaffRecord = {
+  id: string;
+  name: string;
+  role?: string;
+  payRate?: number;
+};
+
+const ShiftSchema = z
+  .object({
+    staff: z.string().min(1, "Staff is required"), // store staff name for display
+    staffId: z.string().min(1, "Staff is required"),
+    role: z.string().min(1, "Role is required"),
+    area: z.string().min(1, "Area is required"),
+    section: z.string().min(1, "Section is required"),
+    start: z.string().min(1, "Start time is required"), // HH:mm
+    end: z.string().min(1, "End time is required"),
+    notes: z.string().optional().default(""),
+  })
+  .refine((s) => s.start < s.end, {
+    path: ["end"],
+    message: "End must be after start",
+  });
 
 export const RosterSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  shifts: z.array(ShiftSchema).min(1, "Add at least one shift"),
+  description: z.string().optional().default(""),
+  shifts: z.array(ShiftSchema).default([]),
 });
 
 export type Shift = z.infer<typeof ShiftSchema>;
 export type Roster = z.infer<typeof RosterSchema> & { id: string };
 
-export default function RosterForm({ defaultDate, onSubmit }: { defaultDate: Date; onSubmit: (r: Roster) => void }) {
+export default function RosterForm({
+  defaultDate,
+  onSubmit,
+}: {
+  defaultDate: Date;
+  onSubmit: (r: Roster) => void;
+}) {
   const form = useForm<z.infer<typeof RosterSchema>>({
     resolver: zodResolver(RosterSchema),
-    defaultValues: { title: "", shifts: [] },
+    defaultValues: { title: "", description: "", shifts: [] },
   });
 
   const { control, setValue, watch } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "shifts" });
+  const { fields, append } = useFieldArray({ control, name: "shifts" });
 
-  useEffect(() => {
-    if (fields.length === 0) {
-      append({ staff: "", area: "Bar", section: "Front Bar", start: "10:00", end: "14:00" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Staff list from localStorage
+  const [staff] = useLocalStorage<StaffRecord[]>("staff:list", []);
+  const roles = useMemo(() => {
+    const set = new Set<string>();
+    staff.forEach((s) => s.role && set.add(s.role));
+    return Array.from(set);
+  }, [staff]);
+
+  const shifts = watch("shifts");
 
   const getSections = (area?: string) => AREA_SECTIONS.find((a) => a.area === area)?.sections ?? [];
+
+  const parseMinutes = (t: string) => {
+    const [h, m] = t.split(":").map((n) => Number(n));
+    return h * 60 + (m || 0);
+  };
+
+  const stats = useMemo(() => {
+    const totalHours = (shifts || []).reduce((acc, s) => acc + Math.max(0, parseMinutes(s.end) - parseMinutes(s.start)) / 60, 0);
+    const totalCost = (shifts || []).reduce((acc, s) => {
+      const st = staff.find((x) => x.id === s.staffId);
+      const rate = Number(st?.payRate || 0);
+      const hours = Math.max(0, parseMinutes(s.end) - parseMinutes(s.start)) / 60;
+      return acc + rate * hours;
+    }, 0);
+    return {
+      totalHours: Number(totalHours.toFixed(2)),
+      totalCost: Number(totalCost.toFixed(2)),
+      totalShifts: shifts?.length || 0,
+    };
+  }, [shifts, staff]);
+
+  // Shift Dialog state
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Form {...form}>
+      <form
+        className="grid gap-6"
+        onSubmit={form.handleSubmit((values) => onSubmit({ id: crypto.randomUUID?.() || Date.now().toString(), ...values }))}
+      >
+        {/* Top fields */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            name="title"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Roster Name</FormLabel>
+                <FormControl>
+                  <Input placeholder={`Daily roster – ${defaultDate.toDateString()}`} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="md:col-span-1">
+            <FormLabel>Date</FormLabel>
+            <Input value={formatDate(defaultDate, "dd/MM/yyyy")} disabled readOnly />
+          </div>
+        </div>
+
+        <FormField
+          name="description"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Add any notes or special instructions for this roster..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card>
+            <CardContent className="py-4">
+              <div className="text-sm text-muted-foreground">Total Cost</div>
+              <div className="text-xl font-semibold">${stats.totalCost.toFixed(2)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4">
+              <div className="text-sm text-muted-foreground">Total Hours</div>
+              <div className="text-xl font-semibold">{stats.totalHours}h</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4">
+              <div className="text-sm text-muted-foreground">Total Shifts</div>
+              <div className="text-xl font-semibold">{stats.totalShifts}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <FormLabel className="text-base">Shifts by Area</FormLabel>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button type="button" variant="secondary">+ Add Shift</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add New Shift</DialogTitle>
+              </DialogHeader>
+              <AddShiftForm
+                onCancel={() => setOpen(false)}
+                onAdd={(s) => {
+                  append(s);
+                  setOpen(false);
+                }}
+                roles={roles}
+                staff={staff}
+                getSections={getSections}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Areas */}
+        <div className="space-y-3">
+          {AREA_SECTIONS.map(({ area }) => {
+            const list = (shifts || []).filter((s) => s.area === area);
+            return (
+              <Card key={area}>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium">{area}</div>
+                    <div className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? "shift" : "shifts"}</div>
+                  </div>
+                  {list.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No shifts assigned to this area</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {list.map((s, idx) => (
+                        <li key={`${area}-${idx}`} className="text-sm flex items-center justify-between gap-2">
+                          <div className="truncate">
+                            <span className="font-medium">{s.staff}</span>
+                            <span className="mx-2 text-muted-foreground">•</span>
+                            <span>{s.role}</span>
+                            <span className="mx-2 text-muted-foreground">•</span>
+                            <span>
+                              {s.start} - {s.end}
+                            </span>
+                            {s.section ? (
+                              <>
+                                <span className="mx-2 text-muted-foreground">•</span>
+                                <span>{s.section}</span>
+                              </>
+                            ) : null}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button type="submit">Save Roster</Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+function AddShiftForm({
+  onAdd,
+  onCancel,
+  roles,
+  staff,
+  getSections,
+}: {
+  onAdd: (s: Shift) => void;
+  onCancel: () => void;
+  roles: string[];
+  staff: StaffRecord[];
+  getSections: (area?: string) => string[];
+}) {
+  const schema = ShiftSchema;
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      staff: "",
+      staffId: "",
+      role: roles[0] || "",
+      area: AREA_SECTIONS[0].area,
+      section: AREA_SECTIONS[0].sections[0] || "",
+      start: "10:00",
+      end: "16:00",
+      notes: "",
+    },
+  });
+
+  const area = form.watch("area");
+  const sections = getSections(area);
+
+  useEffect(() => {
+    // Ensure section is always valid for the selected area
+    const first = sections[0] ?? "";
+    if (!form.getValues("section") && first) form.setValue("section", first);
+  }, [sections, form]);
 
   return (
     <Form {...form}>
       <form
         className="grid gap-4"
-        onSubmit={form.handleSubmit((values) => onSubmit({ id: crypto.randomUUID?.() || Date.now().toString(), ...values }))}
+        onSubmit={form.handleSubmit((values) => onAdd(values))}
       >
-        <FormField name="title" control={form.control} render={({ field }) => (
-          <FormItem>
-            <FormLabel>Roster Name</FormLabel>
-            <FormControl>
-              <Input placeholder={`Daily roster – ${defaultDate.toDateString()}`} {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Role */}
+          <FormField name="role" control={form.control} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {roles.length === 0 ? <SelectItem value="Staff">Staff</SelectItem> : roles.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <FormLabel>Shifts</FormLabel>
-            <Button type="button" variant="secondary" onClick={() => append({ staff: "", area: "Bar", section: "Front Bar", start: "09:00", end: "17:00" })}>
-              Add Shift
-            </Button>
-          </div>
+          {/* Area */}
+          <FormField name="area" control={form.control} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Area</FormLabel>
+              <Select value={field.value} onValueChange={(val) => {
+                field.onChange(val);
+                const firstSection = getSections(val)[0] ?? "";
+                form.setValue("section", firstSection);
+              }}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select area" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {AREA_SECTIONS.map((a) => (
+                    <SelectItem key={a.area} value={a.area}>{a.area}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-          <div className="space-y-3">
-            {fields.map((field, index) => {
-              const area = watch(`shifts.${index}.area` as const) as string | undefined;
-              const sections = getSections(area);
-              return (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border rounded-md p-3 bg-muted/20">
-                  {/* Staff */}
-                  <FormField control={control} name={`shifts.${index}.staff` as const} render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Staff</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Alex" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+          {/* Section */}
+          <FormField name="section" control={form.control} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Section</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {sections.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-                  {/* Area */}
-                  <FormField control={control} name={`shifts.${index}.area` as const} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Area</FormLabel>
-                      <Select value={field.value} onValueChange={(val) => {
-                        field.onChange(val);
-                        const firstSection = getSections(val)[0] ?? "";
-                        setValue(`shifts.${index}.section` as const, firstSection);
-                      }}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select area" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {AREA_SECTIONS.map((a) => (
-                            <SelectItem key={a.area} value={a.area}>{a.area}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+          {/* Start */}
+          <FormField name="start" control={form.control} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Start Time</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-                  {/* Section */}
-                  <FormField control={control} name={`shifts.${index}.section` as const} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Section</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select section" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sections.map((s) => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+          {/* End */}
+          <FormField name="end" control={form.control} render={({ field }) => (
+            <FormItem>
+              <FormLabel>End Time</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-                  {/* Times */}
-                  <FormField control={control} name={`shifts.${index}.start` as const} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+          {/* Staff */}
+          <FormField name="staffId" control={form.control} render={({ field }) => (
+            <FormItem className="md:col-span-2">
+              <FormLabel>Assign Staff</FormLabel>
+              <Select
+                value={field.value}
+                onValueChange={(val) => {
+                  field.onChange(val);
+                  const selected = staff.find((s) => s.id === val);
+                  form.setValue("staff", selected?.name || "");
+                  if (selected?.role) form.setValue("role", selected.role);
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a team member" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {staff.length === 0 ? (
+                    <SelectItem value="">No staff yet</SelectItem>
+                  ) : (
+                    staff.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}{s.role ? ` – ${s.role}` : ""}{typeof s.payRate === "number" ? ` ($${s.payRate}/hr)` : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-                  <FormField control={control} name={`shifts.${index}.end` as const} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <div className="flex md:justify-end">
-                    <Button type="button" variant="ghost" onClick={() => remove(index)}>Remove</Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* Notes */}
+          <FormField name="notes" control={form.control} render={({ field }) => (
+            <FormItem className="md:col-span-2">
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Additional notes for this shift..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit">Save Roster</Button>
+        <div className="flex justify-between gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button type="submit">+ Add Shift</Button>
         </div>
       </form>
     </Form>

@@ -11,7 +11,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
 
   const [rosters, setRosters] = useState<Record<string, Roster[]>>({
     [format(new Date(), 'yyyy-MM-dd')]: [
-      { id: '1', title: 'Lunch Service', shifts: [{ staff: 'Alex', area: 'Bar', section: 'Front Bar', start: '10:00', end: '14:00' }] }
+      { id: '1', title: 'Lunch Service', description: '', shifts: [{ staff: 'Alex', staffId: 'seed', role: 'Bartender', area: 'Bar', section: 'Front Bar', start: '10:00', end: '14:00', notes: '' }] }
     ]
   });
 
@@ -59,7 +59,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                       + Add daily roster
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-4xl md:max-w-5xl">
                     <DialogHeader>
                       <DialogTitle>Add Daily Roster</DialogTitle>
                     </DialogHeader>
