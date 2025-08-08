@@ -78,7 +78,7 @@ export default function DayTimeline() {
     <section className="animate-enter">
       <header className="mb-4">
         <h1 className="text-xl font-semibold">Day timeline</h1>
-        <p className="text-sm text-muted-foreground">Areas are headers; each Section is a horizontal timeline row.</p>
+        
       </header>
 
       {/* Two-column grid: left labels, right timeline */}
