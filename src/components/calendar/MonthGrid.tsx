@@ -59,7 +59,11 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                       + Add daily roster
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-4xl md:max-w-5xl">
+                  <DialogContent
+                    className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Daily Roster</DialogTitle>
                       <DialogDescription>Plan and assign shifts for this day.</DialogDescription>

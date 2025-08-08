@@ -173,7 +173,11 @@ export default function RosterForm({
             <DialogTrigger asChild>
               <Button type="button" variant="secondary" onClick={(e) => e.stopPropagation()}>+ Add Shift</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent
+              className="sm:max-w-xl max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <DialogHeader>
                 <DialogTitle>Add New Shift</DialogTitle>
                 <DialogDescription>Fill out shift details and assign a staff member.</DialogDescription>
