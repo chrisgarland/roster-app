@@ -1,7 +1,7 @@
 import { CalendarDays, MapPin, Users, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-export function AppSidebar() {
+export function AppSidebar({ className }: { className?: string }) {
   const location = useLocation();
   const current = location.pathname;
   const isActive = (path: string) => current === path;
@@ -22,11 +22,11 @@ export function AppSidebar() {
     url: "/app/settings",
     icon: Settings
   }];
-  return <Sidebar>
-      <SidebarHeader className="h-14 flex items-center px-3 bg-slate-200">
-        <div className="inline-flex items-center rounded-md px-2 py-1 bg-primary/10 text-primary text-base font-bold font-display tracking-tight">RosterFlow</div>
+  return <Sidebar className={className}>
+      <SidebarHeader className="h-14 flex items-center justify-center px-3 bg-sidebar">
+        <div className="self-center inline-flex items-center gap-2 text-2xl font-bold font-playfair tracking-tight"><CalendarDays className="h-6 w-6" aria-hidden /><span>RosterPro</span></div>
       </SidebarHeader>
-      <SidebarContent className="bg-slate-200">
+      <SidebarContent className="bg-sidebar">
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
