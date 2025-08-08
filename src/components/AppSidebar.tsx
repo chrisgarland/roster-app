@@ -28,7 +28,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="bg-slate-200">
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {nav.map(item => <SidebarMenuItem key={item.title}>
