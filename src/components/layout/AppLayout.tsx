@@ -6,9 +6,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 export default function AppLayout() {
   return <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar className="bg-slate-200" />
+        <AppSidebar className="bg-sidebar" />
         <SidebarInset>
-        <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b backdrop-blur px-3 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 shadow-sm bg-slate-200">
+        <header className="h-14 sticky top-0 z-10 flex items-center gap-2 border-b px-3 bg-sidebar shadow-sm">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="ml-1" />
             </div>
@@ -33,7 +33,7 @@ export default function AppLayout() {
               </DropdownMenu>
             </nav>
           </header>
-          <div className="p-4 animate-fade-in">
+          <div className="p-4 bg-sidebar animate-fade-in">
             <Outlet />
           </div>
         </SidebarInset>
