@@ -16,7 +16,7 @@ export default function CalendarMonth() {
 
   return (
     <section className="space-y-4 animate-enter">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-start">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setCurrent(new Date())}>Today</Button>
           <div className="flex items-center gap-1">
@@ -28,10 +28,6 @@ export default function CalendarMonth() {
             </Button>
           </div>
           <h1 className="text-xl font-semibold">{title}</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="soft" size="sm" onClick={() => navigate("/app/day/" + format(new Date(), "yyyy-MM-dd"))}>Day</Button>
-          <Button variant="default" size="sm">Month</Button>
         </div>
       </header>
 

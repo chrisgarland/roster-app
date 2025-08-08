@@ -30,15 +30,15 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
         const key = format(d, 'yyyy-MM-dd');
         const dayRosters = rosters[key] || [];
         return (
-          <div key={key} className="relative min-h-28 border p-2 hover:bg-muted/40 transition-colors">
+          <div key={key} className="relative min-h-28 border p-2 hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => onSelectDay(d)}>
 
             <div className="flex items-center justify-between mb-2">
-              <button onClick={() => onSelectDay(d)} className="text-sm font-medium hover:underline">
+              <div className="text-sm font-medium">
                 <span className={isToday(d) ? 'text-primary font-semibold' : 'text-foreground'}>{format(d, 'd')}</span>
-              </button>
+              </div>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">Add</Button>
+                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={(e) => e.stopPropagation()}>Add</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
@@ -52,7 +52,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
               {dayRosters.map((r) => (
                 <button
                   key={r.id}
-                  className="relative w-full text-left text-xs rounded-md px-2 py-2 bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors shadow-sm hover:shadow-md"
+                  className="relative w-full text-left text-xs rounded-md px-2 py-2 bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors shadow-sm hover:shadow-md" onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-start gap-2">
                     <span aria-hidden className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary/70 ring-2 ring-primary/20" />
@@ -66,7 +66,7 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
               {dayRosters.length === 0 && (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <button className="text-xs text-muted-foreground hover:text-foreground story-link">
+                    <button className="text-xs text-muted-foreground hover:text-foreground story-link" onClick={(e) => e.stopPropagation()}>
                       + Add daily roster
                     </button>
                   </DialogTrigger>
