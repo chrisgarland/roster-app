@@ -83,24 +83,26 @@ export function MonthGrid({ date, onSelectDay }: { date: Date; onSelectDay: (d: 
                 </Dialog>
               ))}
               {dayRosters.length === 0 && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <button className="block w-full text-left px-2 py-2 mt-4 text-xs text-muted-foreground hover:text-foreground story-link" onClick={(e) => e.stopPropagation()}>
-                      + Add daily roster
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent
-                    className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto"
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <DialogHeader>
-                      <DialogTitle>Add Daily Roster</DialogTitle>
-                      <DialogDescription>Plan and assign shifts for this day.</DialogDescription>
-                    </DialogHeader>
-                    <RosterForm defaultDate={d} onSubmit={(r) => addRoster(r)} />
-                  </DialogContent>
-                </Dialog>
+                <div className="mt-4 text-center">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="inline-block px-2 py-2 text-xs text-muted-foreground hover:text-foreground story-link" onClick={(e) => e.stopPropagation()}>
+                        + Add daily roster
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent
+                      className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <DialogHeader>
+                        <DialogTitle>Add Daily Roster</DialogTitle>
+                        <DialogDescription>Plan and assign shifts for this day.</DialogDescription>
+                      </DialogHeader>
+                      <RosterForm defaultDate={d} onSubmit={(r) => addRoster(r)} />
+                    </DialogContent>
+                  </Dialog>
+                </div>
               )}
             </div>
             {!isSameMonth(d, date) && <div className="absolute inset-0 bg-background/60 pointer-events-none" />}
