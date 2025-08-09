@@ -9,6 +9,7 @@ type Action =
   | { type: "addLocations"; payload: { locations: NewLocationInput[] } }
   | { type: "setActiveLocation"; payload: { id: ID | undefined } }
   | { type: "addStaff"; payload: { staff: Omit<StaffRecord, "id"> } }
+  | { type: "updateStaff"; payload: { id: ID; patch: Partial<StaffRecord> } }
   | { type: "removeStaff"; payload: { id: ID } }
   | { type: "addRoster"; payload: { roster: Omit<Roster, "id"> } }
   | { type: "updateRoster"; payload: { roster: Roster } };
@@ -35,10 +36,14 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, activeLocationId: action.payload.id };
     case "addStaff": {
       const id = makeId();
-      return { ...state, staff: [...state.staff, { ...action.payload.staff, id }] };
+      const defaultLocations = (action.payload.staff as any).locations ?? (state.activeLocationId ? [state.activeLocationId] : undefined);
+      return { ...state, staff: [...state.staff, { ...action.payload.staff, locations: defaultLocations, id }] };
     }
     case "removeStaff": {
       return { ...state, staff: state.staff.filter((s) => s.id !== action.payload.id) };
+    }
+    case "updateStaff": {
+      return { ...state, staff: state.staff.map((s) => (s.id === action.payload.id ? { ...s, ...action.payload.patch } : s)) };
     }
     case "addRoster": {
       const id = makeId();

@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useEffect, useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
-import { useActiveLocation, useStaff } from "@/data/hooks";
+import { useActiveLocation, useStaff, useStaffByLocation } from "@/data/hooks";
 import type { Roster as StoreRoster, StaffRecord, Area } from "@/data/types";
 import { toast } from "@/components/ui/use-toast";
 

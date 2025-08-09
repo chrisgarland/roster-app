@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useStaff } from "@/data/hooks";
+import { useStaff, useLocations, useActiveLocation } from "@/data/hooks";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 
@@ -22,6 +22,7 @@ const StaffSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   payRate: z.coerce.number().min(0).default(0),
   availability: z.array(z.enum(DAYS)).default([]),
+  locations: z.array(z.string()).min(1, "Select at least one location"),
 });
 
 
@@ -32,15 +33,18 @@ const ROLES = ["Bartender", "Chef", "Server", "Host", "Manager"];
 export default function Staff() {
   const { toast } = useToast();
   const { staff, add, remove: removeStaff } = useStaff();
+  const locations = useLocations();
+  const active = useActiveLocation();
   const [tab, setTab] = useState("add");
 
-  const form = useForm<StaffForm>({ resolver: zodResolver(StaffSchema), defaultValues: { availability: [], payRate: 0 } });
+  const form = useForm<StaffForm>({ resolver: zodResolver(StaffSchema), defaultValues: { availability: [], payRate: 0, locations: active?.id ? [active.id] : [] } });
 
   useEffect(() => {
     document.title = "Staff Management – Add and Manage Staff";
   }, []);
 
   const count = staff.length;
+  const locMap = new Map((locations || []).map((l) => [l.id, l.name]));
 
   const onSubmit = (values: StaffForm) => {
     const DAY_TO_ABBR: Record<string, string> = { Monday:"Mon", Tuesday:"Tue", Wednesday:"Wed", Thursday:"Thu", Friday:"Fri", Saturday:"Sat", Sunday:"Sun" };
@@ -141,6 +145,33 @@ export default function Staff() {
                     )} />
                   </div>
 
+                  <FormField name="locations" control={form.control} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign Locations *</FormLabel>
+                      {locations.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Add a location first.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {locations.map((l) => (
+                            <div key={l.id} className="flex items-center gap-2">
+                              <Checkbox
+                                checked={(field.value || []).includes(l.id)}
+                                onCheckedChange={(c) => {
+                                  const set = new Set<string>(field.value || []);
+                                  if (c) set.add(l.id); else set.delete(l.id);
+                                  field.onChange(Array.from(set));
+                                }}
+                                id={`loc-${l.id}`}
+                              />
+                              <Label htmlFor={`loc-${l.id}`}>{l.name}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
                   <div className="space-y-2">
                     <Label>Availability</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -185,6 +216,7 @@ export default function Staff() {
                         <th className="py-2 pr-2">Email</th>
                         <th className="py-2 pr-2">Phone</th>
                         <th className="py-2 pr-2">Pay</th>
+                        <th className="py-2 pr-2">Locations</th>
                         <th className="py-2 pr-2">Availability</th>
                         <th className="py-2 pr-2 text-right">Actions</th>
                       </tr>

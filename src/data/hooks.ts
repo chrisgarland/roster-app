@@ -31,6 +31,19 @@ export function useStaff() {
   return { staff: state.staff, add, remove };
 }
 
+export function useUpdateStaff() {
+  const { dispatch } = useStoreInternal();
+  return useCallback((id: ID, patch: Partial<StaffRecord>) => dispatch({ type: "updateStaff", payload: { id, patch } }), [dispatch]);
+}
+
+export function useStaffByLocation(locationId?: ID) {
+  const { state } = useStoreInternal();
+  return useMemo(
+    () => (!locationId ? [] : state.staff.filter((s) => Array.isArray(s.locations) && s.locations.includes(locationId))),
+    [state.staff, locationId]
+  );
+}
+
 export function useRostersByDate(dateISO: string, locationId?: ID) {
   const { state } = useStoreInternal();
   return useMemo(() => state.rosters.filter((r) => r.dateISO === dateISO && (!locationId || r.locationId === locationId)), [state.rosters, dateISO, locationId]);

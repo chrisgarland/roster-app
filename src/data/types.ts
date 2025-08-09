@@ -33,6 +33,7 @@ export type StaffRecord = {
   phone?: string;
   payRate?: number;
   availability?: AvailabilityDay[];
+  locations?: ID[];
 };
 
 export type Shift = {
