@@ -229,8 +229,6 @@ export default function RosterForm({
             </DialogTrigger>
             <DialogContent
               className="sm:max-w-xl max-h-[85vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
             >
               <DialogHeader>
                 <DialogTitle>Add New Shift</DialogTitle>
@@ -325,11 +323,11 @@ function AddShiftForm({
     resolver: zodResolver(schema),
     defaultValues: {
       staffId: "",
-      role: roles[0] || "Staff",
-      areaId: areas[0]?.id || "",
-      section: getSections(areas[0]?.id)[0] || "",
-      start: "10:00",
-      end: "16:00",
+      role: "",
+      areaId: "",
+      section: "",
+      start: "",
+      end: "",
       notes: "",
     },
   });
