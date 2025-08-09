@@ -81,6 +81,7 @@ export default function RosterForm({
   const active = useActiveLocation();
   const areas = active?.areas ?? [];
   const { staff } = useStaff();
+  const eligibleStaff = useStaffByLocation(active?.id);
 
   const roles = useMemo(() => {
     const set = new Set<string>();
@@ -240,7 +241,7 @@ export default function RosterForm({
                   setOpen(false);
                 }}
                 roles={roles}
-                staff={staff}
+                staff={eligibleStaff}
                 getSections={getSections}
                 areas={areas}
               />

@@ -229,6 +229,13 @@ export default function Staff() {
                           <td className="py-2 pr-2">{s.email}</td>
                           <td className="py-2 pr-2">{s.phone}</td>
                           <td className="py-2 pr-2">{s.payRate ? `$${Number(s.payRate).toFixed(2)}` : "—"}</td>
+                          <td className="py-2 pr-2">
+                            {s.locations && s.locations.length > 0 ? (
+                              <span>{s.locations.map((id) => locMap.get(id) || "Unknown").join(", ")}</span>
+                            ) : (
+                              <span className="text-muted-foreground">Unassigned (cannot be scheduled)</span>
+                            )}
+                          </td>
                           <td className="py-2 pr-2">{s.availability?.length ? s.availability.join(", ") : "—"}</td>
                           <td className="py-2 pr-2 text-right">
                             <Button variant="ghost" size="sm" onClick={() => onRemove(s.id)}>Remove</Button>

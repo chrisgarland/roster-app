@@ -1,7 +1,7 @@
 import { eachHourOfInterval, format, parseISO } from "date-fns";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useActiveLocation, useRostersByDate, useStaff, useUpdateRoster } from "@/data/hooks";
+import { useActiveLocation, useRostersByDate, useStaff, useUpdateRoster, useStaffByLocation } from "@/data/hooks";
 import { toast } from "@/components/ui/use-toast";
 import ShiftEditorDialog from "@/components/timeline/ShiftEditorDialog";
 import type { Shift } from "@/data/types";
@@ -19,6 +19,7 @@ export default function DayTimeline() {
   const active = useActiveLocation();
   const groups = active?.areas ?? [];
   const { staff } = useStaff();
+  const eligibleStaff = useStaffByLocation(active?.id);
   const rosters = useRostersByDate(day, active?.id);
 
   const allShifts = useMemo(() => rosters.flatMap((r) => r.shifts), [rosters]);
@@ -130,7 +131,7 @@ export default function DayTimeline() {
           onOpenChange={(open) => setEditor(open ? editor : null)}
           shift={selectedShift as Shift}
           areas={groups}
-          staff={staff}
+          staff={eligibleStaff}
           onSave={(updated) => {
             const newRoster = { ...activeRoster, shifts: activeRoster.shifts.map((s) => s.id === (selectedShift as Shift).id ? { ...s, ...updated } : s) };
             updateRoster(newRoster);

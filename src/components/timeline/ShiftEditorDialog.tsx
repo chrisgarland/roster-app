@@ -47,7 +47,7 @@ export default function ShiftEditorDialog({
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      staffId: shift.staffId ?? staff[0]?.id ?? "",
+      staffId: (staff.some((s) => s.id === (shift.staffId ?? "")) ? (shift.staffId as string) : (staff[0]?.id ?? "")),
       role: shift.role,
       areaId: shift.areaId,
       section: shift.section,
