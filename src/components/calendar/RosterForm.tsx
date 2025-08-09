@@ -50,6 +50,8 @@ export default function RosterForm({
   onSubmit: (r: Omit<StoreRoster, "id">) => void;
   roster?: StoreRoster;
 }) {
+  const defaultTitle = useMemo(() => `Daily roster – ${formatDate(defaultDate, "dd MMM yyyy")}`, [defaultDate]);
+
   const initialDefaults = useMemo(() => {
     if (roster) {
       return {
@@ -66,8 +68,8 @@ export default function RosterForm({
         })),
       };
     }
-    return { title: "", description: "", shifts: [] };
-  }, [roster]);
+    return { title: defaultTitle, description: "", shifts: [] };
+  }, [roster, defaultTitle]);
 
   const form = useForm<z.infer<typeof RosterSchema>>({
     resolver: zodResolver(RosterSchema),
@@ -154,7 +156,7 @@ export default function RosterForm({
           console.log("[RosterForm] Saving roster", { title: values.title, shiftCount: values.shifts.length });
           onSubmit(payload);
           if (!roster) {
-            form.reset({ title: "", description: "", shifts: [] });
+            form.reset({ title: defaultTitle, description: "", shifts: [] });
             toast({ title: "Roster saved", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
           } else {
             toast({ title: "Roster updated", description: `${values.title || "Daily roster"} • ${payload.shifts.length} shift(s)` });
@@ -170,7 +172,7 @@ export default function RosterForm({
               <FormItem className="md:col-span-2">
                 <FormLabel>Roster Name</FormLabel>
                 <FormControl>
-                  <Input placeholder={`Daily roster – ${defaultDate.toDateString()}`} {...field} />
+                  <Input placeholder={defaultTitle} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
