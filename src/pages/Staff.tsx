@@ -46,7 +46,7 @@ export default function Staff() {
   const [editing, setEditing] = useState<StaffRecord | null>(null);
 
   const form = useForm<StaffForm>({ resolver: zodResolver(StaffSchema), defaultValues: { availability: [], payRate: 0, locations: active?.id ? [active.id] : [] } });
-  const editForm = useForm<StaffForm>({ resolver: zodResolver(StaffSchema) });
+  const editForm = useForm<StaffForm>({ resolver: zodResolver(StaffSchema), defaultValues: { name: "", role: "", email: "", phone: "", payRate: 0, locations: [], availability: [] } });
 
   useEffect(() => {
     if (editOpen && editing) {
@@ -88,7 +88,7 @@ export default function Staff() {
   };
 
   const toggleEditAvailability = (day: typeof DAYS[number], checked: boolean) => {
-    const current = new Set(editForm.getValues("availability"));
+    const current = new Set(editForm.getValues("availability") || []);
     if (checked) current.add(day); else current.delete(day);
     editForm.setValue("availability", Array.from(current) as any, { shouldDirty: true });
   };
@@ -401,7 +401,7 @@ export default function Staff() {
                     {DAYS.map((day) => (
                       <div key={day} className="flex items-center gap-2">
                         <Checkbox
-                          checked={editForm.watch("availability").includes(day)}
+                          checked={(editForm.watch("availability") || []).includes(day)}
                           onCheckedChange={(c) => toggleEditAvailability(day, Boolean(c))}
                           id={`edit-day-${day}`}
                         />
