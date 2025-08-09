@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useAddLocations, useLocations } from "@/data/hooks";
-import { useUpdateLocation, useRemoveLocation } from "@/data/hooks";
+import { useAddLocations, useLocations, useUpdateLocation, useRemoveLocation, useRosters } from "@/data/hooks";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const LocationSchema = z.object({
   name: z.string().min(1),

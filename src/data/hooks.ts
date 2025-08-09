@@ -56,7 +56,16 @@ export function useStaffByLocation(locationId?: ID) {
 
 export function useRostersByDate(dateISO: string, locationId?: ID) {
   const { state } = useStoreInternal();
-  return useMemo(() => state.rosters.filter((r) => r.dateISO === dateISO && (!locationId || r.locationId === locationId)), [state.rosters, dateISO, locationId]);
+  return useMemo(
+    () => state.rosters.filter((r) => r.dateISO === dateISO && (!locationId || r.locationId === locationId)),
+    [state.rosters, dateISO, locationId]
+  );
+}
+
+// All rosters (useful for cross-date usage analysis)
+export function useRosters() {
+  const { state } = useStoreInternal();
+  return state.rosters;
 }
 
 export function useAddRoster() {
