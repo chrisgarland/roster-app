@@ -7,6 +7,8 @@ const makeId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? 
 // Actions
 type Action =
   | { type: "addLocations"; payload: { locations: NewLocationInput[] } }
+  | { type: "updateLocation"; payload: { id: ID; patch: Partial<Location> } }
+  | { type: "removeLocation"; payload: { id: ID } }
   | { type: "setActiveLocation"; payload: { id: ID | undefined } }
   | { type: "addStaff"; payload: { staff: Omit<StaffRecord, "id"> } }
   | { type: "updateStaff"; payload: { id: ID; patch: Partial<StaffRecord> } }
@@ -34,6 +36,23 @@ function reducer(state: AppState, action: Action): AppState {
     }
     case "setActiveLocation":
       return { ...state, activeLocationId: action.payload.id };
+    case "updateLocation": {
+      const patch = action.payload.patch as any;
+      const patchedAreas = Array.isArray(patch?.areas)
+        ? patch.areas.map((a: any) => ({ ...a, id: a.id ?? makeId() }))
+        : undefined;
+      return {
+        ...state,
+        locations: state.locations.map((l) =>
+          l.id === action.payload.id ? { ...l, ...(patchedAreas ? { ...patch, areas: patchedAreas } : patch) } : l
+        ),
+      };
+    }
+    case "removeLocation": {
+      const remaining = state.locations.filter((l) => l.id !== action.payload.id);
+      const activeLocationId = state.activeLocationId === action.payload.id ? remaining[0]?.id : state.activeLocationId;
+      return { ...state, locations: remaining, activeLocationId };
+    }
     case "addStaff": {
       const id = makeId();
       const defaultLocations = (action.payload.staff as any).locations ?? (state.activeLocationId ? [state.activeLocationId] : undefined);

@@ -24,6 +24,16 @@ export function useAddLocations() {
   return useCallback((locations: NewLocationInput[]) => dispatch({ type: "addLocations", payload: { locations } }), [dispatch]);
 }
 
+export function useUpdateLocation() {
+  const { dispatch } = useStoreInternal();
+  return useCallback((id: ID, patch: Partial<Location>) => dispatch({ type: "updateLocation", payload: { id, patch } }), [dispatch]);
+}
+
+export function useRemoveLocation() {
+  const { dispatch } = useStoreInternal();
+  return useCallback((id: ID) => dispatch({ type: "removeLocation", payload: { id } }), [dispatch]);
+}
+
 export function useStaff() {
   const { state, dispatch } = useStoreInternal();
   const add = useCallback((staff: Omit<StaffRecord, "id">) => dispatch({ type: "addStaff", payload: { staff } }), [dispatch]);
