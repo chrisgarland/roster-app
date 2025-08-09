@@ -71,7 +71,7 @@ export default function ShiftEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Edit Shift</DialogTitle>
           <DialogDescription>Update details or remove this shift.</DialogDescription>
